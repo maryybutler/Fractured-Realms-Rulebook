@@ -39,6 +39,7 @@
     transform-origin: left center;
     backface-visibility: hidden;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none; /* hide until preloaded */
   }
 
   .page.flipped {
@@ -77,7 +78,6 @@
 </head>
 <body>
 <div id="book-container">
-  <!-- Pages will be injected here -->
   <div class="controls">
     <button id="prev" class="arrow" aria-label="Previous page">‹</button>
     <button id="next" class="arrow" aria-label="Next page">›</button>
@@ -87,28 +87,42 @@
 <script>
 (function(){
   const base = "/Fractured-Realm-Rulebook/";
-  const pages = [
+  const pageFiles = [
     "01.png","02.png","03.png","04.png","05.png","06.png","07.png",
     "08.png","09.png","10.png","11.png","12.png","13.png","14.png",
     "15.png","16.png","17.png","fracturedrealmlogo.png"
-  ].map(f=> base+f);
+  ];
+  const pages = pageFiles.map(f => base + f);
 
   const container = document.getElementById("book-container");
   const prevBtn = document.getElementById("prev");
   const nextBtn = document.getElementById("next");
-
-  // create pages stacked
   let pageEls = [];
-  pages.forEach((imgSrc,i)=>{
+  let current = 0;
+
+  // Preload all images
+  let loadedImages = 0;
+  pages.forEach((src,i)=>{
+    const img = new Image();
+    img.src = src;
+    img.onload = ()=>{
+      loadedImages++;
+      if(loadedImages === pages.length){
+        initBook();
+      }
+    };
     const page = document.createElement("div");
     page.className = "page";
-    page.style.backgroundImage = `url('${imgSrc}')`;
+    page.style.backgroundImage = `url('${src}')`;
     page.style.zIndex = pages.length - i;
     container.appendChild(page);
     pageEls.push(page);
   });
 
-  let current = 0;
+  function initBook(){
+    pageEls.forEach(p=>p.style.display="block");
+    updateControls();
+  }
 
   function updateControls(){
     prevBtn.disabled = current === 0;
@@ -132,26 +146,23 @@
   nextBtn.addEventListener("click", flipNext);
   prevBtn.addEventListener("click", flipPrev);
 
-  // keyboard
   window.addEventListener("keydown",(e)=>{
     if(e.key === "ArrowRight") flipNext();
     if(e.key === "ArrowLeft") flipPrev();
   });
 
-  // swipe support
+  // Touch swipe
   let startX = 0;
-  container.addEventListener("touchstart", e=>{
-    startX = e.touches[0].clientX;
-  }, {passive:true});
+  container.addEventListener("touchstart", e=>{ startX = e.touches[0].clientX; }, {passive:true});
   container.addEventListener("touchend", e=>{
     const endX = e.changedTouches[0].clientX;
     if(endX - startX > 50) flipPrev();
     else if(startX - endX > 50) flipNext();
   }, {passive:true});
 
-  updateControls();
 })();
 </script>
 </body>
 </html>
+
 
