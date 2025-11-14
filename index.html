@@ -1,167 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>Fractured Realm Rulebook</title>
+
+<!-- PWA manifest -->
 <link rel="manifest" href="/Fractured-Realm-Rulebook/manifest.json">
-<meta name="theme-color" content="#5e5754">
+
+<!-- iOS install support -->
 <link rel="apple-touch-icon" href="/Fractured-Realm-Rulebook/fracturedrealmlogo.png">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 
 <style>
-  :root { --bg: #5e5754; }
-  html, body {
-    margin:0;
-    padding:0;
-    height:100%;
-    background: var(--bg);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-family: Verdana, Arial, sans-serif;
-  }
+    body {
+        margin: 0;
+        background: #5e5754;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        height: 100vh;
+    }
 
-  #book-container {
-    position: relative;
-    width: min(92vw, 900px);
-    height: min(88vh, 1200px);
-    perspective: 2000px;
-  }
+    #viewer {
+        position: relative;
+        width: 95vw;
+        height: 95vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-  .page {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.6);
-    transform-origin: left center;
-    backface-visibility: hidden;
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    display: none; /* hide until preloaded */
-  }
+    img.page {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 6px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        transition: transform 0.5s ease;
+    }
 
-  .page.flipped {
-    transform: rotateY(-180deg);
-    z-index: 0;
-  }
+    /* 3D flip effect */
+    .flip-next { transform: rotateY(-90deg); }
+    .flip-prev { transform: rotateY(90deg); }
 
-  .page:not(.flipped) {
-    z-index: 10;
-  }
-
-  .controls {
-    position:absolute;
-    top:50%;
-    left:0;
-    right:0;
-    transform:translateY(-50%);
-    display:flex;
-    justify-content:space-between;
-    pointer-events:none;
-    padding:0 12px;
-  }
-  .arrow {
-    pointer-events:auto;
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 2.6rem;
-    cursor: pointer;
-    user-select:none;
-  }
-  .arrow:active { transform: translateY(1px); }
-  .arrow[disabled] { opacity:.35; cursor:not-allowed; }
-
+    /* Navigation arrows */
+    .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 45px;
+        font-weight: bold;
+        color: white;
+        background: transparent;
+        padding: 10px;
+        cursor: pointer;
+        user-select: none;
+    }
+    #prev { left: 10px; }
+    #next { right: 10px; }
 </style>
 </head>
+
 <body>
-<div id="book-container">
-  <div class="controls">
-    <button id="prev" class="arrow" aria-label="Previous page">‹</button>
-    <button id="next" class="arrow" aria-label="Next page">›</button>
-  </div>
+
+<div id="viewer">
+    <span id="prev" class="arrow">&#10094;</span>
+    <img id="pageImg" class="page" src="">
+    <span id="next" class="arrow">&#10095;</span>
 </div>
 
 <script>
-(function(){
-  const base = "/Fractured-Realm-Rulebook/";
-  const pageFiles = [
-    "01.png","02.png","03.png","04.png","05.png","06.png","07.png",
-    "08.png","09.png","10.png","11.png","12.png","13.png","14.png",
-    "15.png","16.png","17.png","fracturedrealmlogo.png"
-  ];
-  const pages = pageFiles.map(f => base + f);
+const base = "/Fractured-Realm-Rulebook/";
 
-  const container = document.getElementById("book-container");
-  const prevBtn = document.getElementById("prev");
-  const nextBtn = document.getElementById("next");
-  let pageEls = [];
-  let current = 0;
+const pages = [
+    base + "01.png",
+    base + "02.png",
+    base + "03.png",
+    base + "04.png",
+    base + "05.png",
+    base + "06.png",
+    base + "07.png",
+    base + "08.png",
+    base + "09.png",
+    base + "10.png",
+    base + "11.png",
+    base + "12.png",
+    base + "13.png",
+    base + "14.png",
+    base + "15.png",
+    base + "16.png",
+    base + "17.png",
+    base + "fracturedrealmlogo.png"
+];
 
-  // Preload all images
-  let loadedImages = 0;
-  pages.forEach((src,i)=>{
-    const img = new Image();
-    img.src = src;
-    img.onload = ()=>{
-      loadedImages++;
-      if(loadedImages === pages.length){
-        initBook();
-      }
-    };
-    const page = document.createElement("div");
-    page.className = "page";
-    page.style.backgroundImage = `url('${src}')`;
-    page.style.zIndex = pages.length - i;
-    container.appendChild(page);
-    pageEls.push(page);
-  });
+let current = 0;
+const img = document.getElementById("pageImg");
 
-  function initBook(){
-    pageEls.forEach(p=>p.style.display="block");
-    updateControls();
-  }
+function showPage(i, direction) {
+    if (direction) {
+        img.classList.add(direction);
+        setTimeout(() => {
+            img.src = pages[i];
+            img.classList.remove(direction);
+        }, 250);
+    } else {
+        img.src = pages[i];
+    }
+}
 
-  function updateControls(){
-    prevBtn.disabled = current === 0;
-    nextBtn.disabled = current === pages.length;
-  }
+document.getElementById("next").onclick = () => {
+    if (current < pages.length - 1) {
+        current++;
+        showPage(current, "flip-next");
+    }
+};
 
-  function flipNext(){
-    if(current >= pages.length) return;
-    pageEls[current].classList.add("flipped");
-    current++;
-    updateControls();
-  }
+document.getElementById("prev").onclick = () => {
+    if (current > 0) {
+        current--;
+        showPage(current, "flip-prev");
+    }
+};
 
-  function flipPrev(){
-    if(current <= 0) return;
-    current--;
-    pageEls[current].classList.remove("flipped");
-    updateControls();
-  }
+// Swipe controls
+let startX = 0;
+document.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+document.addEventListener("touchend", e => {
+    let endX = e.changedTouches[0].clientX;
+    if (endX - startX > 50) document.getElementById("prev").click();
+    if (startX - endX > 50) document.getElementById("next").click();
+});
 
-  nextBtn.addEventListener("click", flipNext);
-  prevBtn.addEventListener("click", flipPrev);
+// Load first page
+showPage(0);
 
-  window.addEventListener("keydown",(e)=>{
-    if(e.key === "ArrowRight") flipNext();
-    if(e.key === "ArrowLeft") flipPrev();
-  });
-
-  // Touch swipe
-  let startX = 0;
-  container.addEventListener("touchstart", e=>{ startX = e.touches[0].clientX; }, {passive:true});
-  container.addEventListener("touchend", e=>{
-    const endX = e.changedTouches[0].clientX;
-    if(endX - startX > 50) flipPrev();
-    else if(startX - endX > 50) flipNext();
-  }, {passive:true});
-
-})();
+// Register service worker
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/Fractured-Realm-Rulebook/sw.js");
+}
 </script>
+
 </body>
 </html>
 
