@@ -1,6 +1,6 @@
 // Minimal service worker for offline caching and PWA install
 
-const CACHE_NAME = 'fractured-realm-cache-v4';
+const CACHE_NAME = 'fractured-realm-cache-v5';
 const urlsToCache = [
   'index.html',
   'manifest.json',
