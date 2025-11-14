@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fractured Realm Rulebook</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#5e5754">
   <style>
     body {
       margin: 0;
@@ -63,24 +65,9 @@
 
   <script>
     const pages = [
-      "01.png",
-      "02.png",
-      "03.png",
-      "04.png",
-      "05.png",
-      "06.png",
-      "07.png",
-      "08.png",
-      "09.png",
-      "10.png",
-      "11.png",
-      "12.png",
-      "13.png",
-      "14.png",
-      "15.png",
-      "16.png",
-      "17.png",
-      "fracturedrealmlogo.png"
+      "01.png","02.png","03.png","04.png","05.png","06.png","07.png",
+      "08.png","09.png","10.png","11.png","12.png","13.png","14.png",
+      "15.png","16.png","17.png","fracturedrealmlogo.png"
     ];
 
     let currentPage = 0;
@@ -93,7 +80,6 @@
       imgElement.style.transform = "scale(0.9)";
       setTimeout(() => imgElement.style.transform = "scale(1)", 50);
       imgElement.src = pages[currentPage];
-
       prevArrow.disabled = currentPage === 0;
       nextArrow.disabled = currentPage === pages.length - 1;
     }
@@ -115,8 +101,15 @@
       else if(startX - endX > 50 && currentPage < pages.length - 1) showPage(currentPage + 1);
     });
 
-    // Start with page 01
+    // Start with first page
     showPage(0);
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.log('Service Worker Registration Failed', err));
+    }
   </script>
 </body>
 </html>
