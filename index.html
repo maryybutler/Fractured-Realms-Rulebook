@@ -8,45 +8,33 @@
 <meta name="theme-color" content="#5e5754">
 <style>
   html, body {
-    margin:0;
-    padding:0;
-    height:100%;
-    width:100%;
+    margin:0; padding:0;
+    height:100%; width:100%;
     background-color:#5e5754;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display:flex; justify-content:center; align-items:center;
     overflow:hidden;
+    font-family:Verdana,Arial,sans-serif;
   }
 
   .stage {
-    width:90%;
-    height:90%;
+    width:90%; height:90%;
     perspective:1600px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .book {
-    width:100%;
-    height:100%;
+    display:flex; align-items:center; justify-content:center;
     position:relative;
   }
 
+  .book {
+    width:100%; height:100%; position:relative;
+  }
+
   .page {
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
     background:#5e5754;
     border-radius:10px;
     box-shadow:0 12px 30px rgba(0,0,0,0.25);
     overflow:hidden;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display:flex; justify-content:center; align-items:center;
     -webkit-backface-visibility:hidden;
     backface-visibility:hidden;
     transform-origin:left center;
@@ -57,7 +45,6 @@
     max-width:95%;
     max-height:95%;
     object-fit:contain;
-    display:block;
   }
 
   .page.visible { transform: none; }
@@ -70,12 +57,37 @@
     .page.incoming { transform: translateX(100%); }
     .page.incoming.show { transform: translateX(0); }
   }
+
+  .controls {
+    position:absolute;
+    top:50%; width:100%;
+    display:flex; justify-content:space-between;
+    transform:translateY(-50%);
+    padding:0 10px;
+    pointer-events:none;
+  }
+
+  .btn {
+    background: rgba(43,121,146,0.8);
+    color:white;
+    border:none;
+    padding:10px 15px;
+    font-size:1.5rem;
+    border-radius:8px;
+    cursor:pointer;
+    pointer-events:auto;
+    user-select:none;
+  }
+  .btn:active { transform: translateY(1px); }
 </style>
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="book" id="book">
-      <!-- pages populated by JS -->
+    <div class="book" id="book"></div>
+
+    <div class="controls">
+      <button class="btn" id="prevBtn">⟵</button>
+      <button class="btn" id="nextBtn">⟶</button>
     </div>
   </div>
 
@@ -98,7 +110,7 @@ const pages = [
   "CARD_GAME–Rule_Set-15.png",
   "CARD_GAME–Rule_Set-16.png",
   "CARD_GAME–Rule_Set-17.png",
-  "CARD_GAME–Rule_Set-18.png"
+  "fracturedrealmlogo.png"  // last page is logo
 ];
 
 let currentIndex = 0;
@@ -127,7 +139,7 @@ function buildPages(){
     bookEl.appendChild(el);
   });
   pageEls = Array.from(bookEl.querySelectorAll('.page'));
-  pageEls[currentIndex].classList.add('visible');
+  pageEls[currentIndex].classList.add('visible'); // show page 1 on load
 }
 
 function nextPage(){
@@ -143,7 +155,7 @@ function nextPage(){
     next.classList.remove('incoming','show');
     currentIndex++;
     pageEls[currentIndex].classList.add('visible');
-  }, 720);
+  },720);
 }
 
 function prevPage(){
@@ -154,7 +166,7 @@ function prevPage(){
   prev.style.transform = 'rotateY(-180deg)';
   void prev.offsetWidth;
   prev.classList.add('show');
-  curr.classList.add('flip-forward'); // temporarily reverse animation
+  curr.classList.add('flip-forward');
   setTimeout(()=>{
     prev.classList.remove('incoming','show');
     prev.style.transform='';
@@ -171,7 +183,6 @@ document.getElementById('stage').addEventListener('touchstart',e=>{
   const t = e.changedTouches[0];
   startX = t.pageX; startY = t.pageY; startTime = Date.now();
 },{passive:true});
-
 document.getElementById('stage').addEventListener('touchend',e=>{
   const t = e.changedTouches[0];
   const dx = t.pageX-startX, dy = t.pageY-startY, dt = Date.now()-startTime;
@@ -181,7 +192,11 @@ document.getElementById('stage').addEventListener('touchend',e=>{
   }
 },{passive:true});
 
-// optional keyboard navigation
+// buttons
+document.getElementById('nextBtn').addEventListener('click', nextPage);
+document.getElementById('prevBtn').addEventListener('click', prevPage);
+
+// keyboard support
 window.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight') nextPage();
   if(e.key==='ArrowLeft') prevPage();
@@ -196,5 +211,3 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
-
-
